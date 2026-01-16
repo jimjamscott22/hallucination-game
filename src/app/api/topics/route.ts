@@ -13,9 +13,9 @@ export async function GET(req: Request) {
 
     const openai = openaiClient();
 
-    const response = await openai.responses.create({
+    const response = await openai.chat.completions.create({
       model: OPENAI_MODEL,
-      input: [
+      messages: [
         {
           role: "system",
           content:
@@ -23,32 +23,15 @@ export async function GET(req: Request) {
         },
         {
           role: "user",
-          content: `Give me ${count} random topics. Keep each topic 2–5 words. Avoid controversial, sensitive, or hyper-niche topics. Return JSON only.`,
+          content: `Give me ${count} random topics. Keep each topic 2–5 words. Avoid controversial, sensitive, or hyper-niche topics. Return JSON only in this format: {"topics": ["topic1", "topic2", ...]}`,
         },
       ],
-      text: {
-        format: {
-          type: "json_schema",
-          name: "topic_list",
-          strict: true,
-          schema: {
-            type: "object",
-            additionalProperties: false,
-            properties: {
-              topics: {
-                type: "array",
-                minItems: count,
-                maxItems: count,
-                items: { type: "string" },
-              },
-            },
-            required: ["topics"],
-          },
-        },
-      },
+      response_format: { type: "json_object" },
+      temperature: 0.7,
     });
 
-    const data = JSON.parse(response.output_text);
+    const content = response.choices[0]?.message?.content ?? "{}";
+    const data = JSON.parse(content);
 
     // Basic normalization
     const topics = (data.topics as unknown[])
