@@ -32,9 +32,9 @@ export async function POST(req: Request) {
 
     const openai = openaiClient();
 
-    const response = await openai.responses.create({
+    const response = await openai.chat.completions.create({
       model: OPENAI_MODEL,
-      input: [
+      messages: [
         {
           role: "system",
           content:
@@ -54,52 +54,16 @@ export async function POST(req: Request) {
             "IDs must be A, B, C, D and answerId must be one of them.",
             "Shuffle the order so the hallucination is not always in the same position.",
             difficultyInstruction(difficulty),
+            'Return JSON in this format: {"topic": "...", "difficulty": "...", "options": [{"id": "A", "text": "..."}, ...], "answerId": "A", "explanation": "...", "correction": "..."}',
           ].join("\n"),
         },
       ],
-      text: {
-        format: {
-          type: "json_schema",
-          name: "hallucination_round",
-          strict: true,
-          schema: {
-            type: "object",
-            additionalProperties: false,
-            properties: {
-              topic: { type: "string" },
-              difficulty: { type: "string", enum: ["easy", "medium", "hard"] },
-              options: {
-                type: "array",
-                minItems: 4,
-                maxItems: 4,
-                items: {
-                  type: "object",
-                  additionalProperties: false,
-                  properties: {
-                    id: { type: "string", enum: ["A", "B", "C", "D"] },
-                    text: { type: "string" },
-                  },
-                  required: ["id", "text"],
-                },
-              },
-              answerId: { type: "string", enum: ["A", "B", "C", "D"] },
-              explanation: { type: "string" },
-              correction: { type: "string" },
-            },
-            required: [
-              "topic",
-              "difficulty",
-              "options",
-              "answerId",
-              "explanation",
-              "correction",
-            ],
-          },
-        },
-      },
+      response_format: { type: "json_object" },
+      temperature: 0.7,
     });
 
-    const data = JSON.parse(response.output_text);
+    const content = response.choices[0]?.message?.content ?? "{}";
+    const data = JSON.parse(content);
 
     return NextResponse.json(data);
   } catch (err) {

@@ -27,9 +27,9 @@ export async function POST(req: Request) {
 
     const openai = openaiClient();
 
-    const response = await openai.responses.create({
+    const response = await openai.chat.completions.create({
       model: OPENAI_MODEL,
-      input: [
+      messages: [
         {
           role: "system",
           content:
@@ -50,46 +50,18 @@ export async function POST(req: Request) {
             "Rules: topics 2–6 words, avoid controversial/sensitive topics, avoid very niche proper nouns.",
             "If the player was wrong, bias continue/deeper toward fundamentals and clarity.",
             "If the player was right, bias deeper toward more challenging/precise subtopics.",
+            'Return JSON in this format: {"continue": ["topic1", "topic2"], "deeper": ["topic1", "topic2", "topic3"], "switch": ["topic1", "topic2", "topic3"]}',
           ]
             .filter(Boolean)
             .join("\n"),
         },
       ],
-      text: {
-        format: {
-          type: "json_schema",
-          name: "topic_suggestions",
-          strict: true,
-          schema: {
-            type: "object",
-            additionalProperties: false,
-            properties: {
-              continue: {
-                type: "array",
-                minItems: 2,
-                maxItems: 2,
-                items: { type: "string" },
-              },
-              deeper: {
-                type: "array",
-                minItems: 3,
-                maxItems: 3,
-                items: { type: "string" },
-              },
-              switch: {
-                type: "array",
-                minItems: 3,
-                maxItems: 3,
-                items: { type: "string" },
-              },
-            },
-            required: ["continue", "deeper", "switch"],
-          },
-        },
-      },
+      response_format: { type: "json_object" },
+      temperature: 0.7,
     });
 
-    const data = JSON.parse(response.output_text);
+    const content = response.choices[0]?.message?.content ?? "{}";
+    const data = JSON.parse(content);
 
     return NextResponse.json(data);
   } catch (err) {

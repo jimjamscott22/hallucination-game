@@ -344,8 +344,8 @@ export default function HallucinationGame() {
                 <p className="font-medium">Something went wrong</p>
                 <p className="text-xs text-red-100/80">{error}</p>
                 <p className="mt-2 text-xs text-red-100/60">
-                  If this is your first run, make sure you created a `.env.local`
-                  with `OPENAI_API_KEY`.
+                  Make sure Ollama is running locally with the llama3.2:latest model.
+                  Run: ollama pull llama3.2:latest && ollama serve
                 </p>
               </div>
             </motion.div>
@@ -569,8 +569,8 @@ export default function HallucinationGame() {
 
         <footer className="mt-auto border-t border-white/10 pt-6 text-xs text-white/50">
           <p>
-            This demo calls OpenAI via Next.js route handlers (your API key stays on
-            the server).
+            This demo uses Ollama with llama3.2:latest running locally via Next.js
+            route handlers (no external API calls).
           </p>
         </footer>
       </div>
